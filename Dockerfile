@@ -7,9 +7,10 @@ MAINTAINER Andy Manson
 ENV QHOME /q
 ENV PATH ${PATH}:${QHOME}/l32/
 
-# Refresh / Update the base image using alpine's package manager "apk", and binutils to allow use of e.g. tar/ar while building
+# Refresh / Update the base image using alpine's package manager "apk", and binutils to allow use of e.g. tar/ar while building. Add curl
 RUN apk update \
-&& apk add --update binutils
+&& apk add --update binutils \
+&& apk --no-cache add curl
 
 # Download & unpack "libc6-i386 for amd64" debian package (this is required for "q" to run on a 64-bit OS).
 # For information view: https://packages.debian.org/jessie/amd64/libc6-i386/
@@ -21,9 +22,14 @@ RUN LIBC32_DEB=libc6-i386_2.19-18+deb8u10_amd64.deb \
 	&& apk del binutils \
 	&& rm -rf /var/lib/apk/lists/*
 
+ARG PORT=4000
+
+ENV PORT=${PORT}
+
 # Ensure we have your our zipped version of q for linux in the same folder as this Dockerfile, and copy it
 COPY q.zip .
 COPY entrypoint.sh /entrypoint.sh
+COPY entrypoint.q /entrypoint.q
 
 # Unzip q for linux to the root ('/'), change file / directory permissions, finally clean up by removing unused folders / utilities
 RUN unzip /q.zip \
@@ -35,5 +41,4 @@ RUN unzip /q.zip \
 
 
 WORKDIR /
-EXPOSE  5001
 ENTRYPOINT ["/entrypoint.sh"]
